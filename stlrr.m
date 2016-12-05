@@ -1,6 +1,6 @@
 function stlrr
 close all; clc; clf;
-[FC VR] = stlread('T1_13.stl');
+[FC VR] = stlRead('pestininkas.stl');
 
 save(['T1_13.mat'], 'FC');
 
@@ -10,10 +10,9 @@ ylabel('y');
 zlabel('z');
 patch('Faces',FC,'Vertices',VR, 'FaceColor',[0,0,1]);
 
-pause;
 
-HPoints = 8;
-CPoints = 8;
+HPoints = 25;
+CPoints = 25;
 
 XX = zeros(HPoints,CPoints);
 YY = zeros(HPoints,CPoints);
@@ -41,6 +40,9 @@ columns = [0:dt_columns:2*pi];
                 YY(1,:)=yc;
                 ZZ(1,:)=min_h;
 rowww = size(rows)+1;
+
+figure(2); hold on, grid on, axis equal;
+
 for i=2:rowww(2)
     rowStart = rows(i-1);
     rowEnd = rowStart + dt_rows; 
@@ -73,6 +75,8 @@ for i=2:rowww(2)
                 YY(i,j)=IntersectionY; 
                 ZZ(i,j)=rowStart;
                 
+                cube_plot([  XX(i,j),  YY(i,j),  ZZ(i,j)],1,1,1,'r');
+                
                 DistanceM=distXYZ;
             end
         end
@@ -88,7 +92,7 @@ end
 
 
 figure;
-surf(XX,YY,ZZ); axis equal;
+% surf(XX,YY,ZZ); axis equal;
 
 TX=rows; 
 TY=ZZ(:,1);
