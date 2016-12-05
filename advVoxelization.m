@@ -8,7 +8,7 @@ ylabel('y');
 zlabel('z');
 patch('Faces',FC,'Vertices',VR, 'FaceColor',[0,0,1]);
 
-VOX_SIZE = 0.8;
+VOX_SIZE = 1.0;
 
 
 [maxX, maxY, maxZ, minX, minY, minZ] = boundingBox(VR);
@@ -19,7 +19,7 @@ voxSizeZ = ceil((maxZ - minZ)/VOX_SIZE);
 
 voxels = zeros(voxSizeX , voxSizeY, voxSizeZ);
  
-figure(2); hold on, grid on, axis equal;
+
 
 sizeFc = size(FC);
 
@@ -29,21 +29,21 @@ for f = 1 :sizeFc
     [vMaxX, vMaxY, vMaxZ, vMinX, vMinY, vMinZ] = boundingBox(vertices);
    
 
-    maxXindex = ceil((vMaxX + VOX_SIZE - minX)/VOX_SIZE);
-    maxYindex = ceil((vMaxY + VOX_SIZE - minY)/VOX_SIZE);
-    maxZindex = ceil((vMaxZ + VOX_SIZE - minZ)/VOX_SIZE);
+    maxXindex = ceil((vMaxX - minX)/VOX_SIZE);
+    maxYindex = ceil((vMaxY - minY)/VOX_SIZE);
+    maxZindex = ceil((vMaxZ - minZ)/VOX_SIZE);
     
-    minXindex = floor((vMinX - VOX_SIZE - minX)/VOX_SIZE);
-    minYindex = floor((vMinY - VOX_SIZE - minY)/VOX_SIZE);
-    minZindex = floor((vMinZ - VOX_SIZE - minZ)/VOX_SIZE);
+    minXindex = floor((vMinX - minX)/VOX_SIZE);
+    minYindex = floor((vMinY - minY)/VOX_SIZE);
+    minZindex = floor((vMinZ - minZ)/VOX_SIZE);
     
     if(minXindex < 1); minXindex = 1; end;
     if(minYindex < 1); minYindex = 1; end;
     if(minZindex < 1); minZindex = 1; end;
     
+    found = 0;
     
     for i = minXindex : maxXindex
-        found = 0;
         for j = minYindex : maxYindex
             for k = minZindex : maxZindex
               
@@ -57,7 +57,8 @@ for f = 1 :sizeFc
                if(intersects == 1)
                    voxels(i,j,k) = 1;
                    found = found + 1;
-                   
+%                    cube_plot([X,Y,Z],VOX_SIZE,VOX_SIZE,VOX_SIZE,'r');
+%                     pause(0.02);
                end
                
            end
@@ -66,10 +67,11 @@ for f = 1 :sizeFc
     end
     
        if(found == 0)
-            sprintf('Error ')
+            disp(sprintf('found zero, algorithm sucks.'));
        end
     
-    sprintf('faces done %d/%d ',f, sizeFc)
+       aa = sprintf('faces done %d / %d', f, sizeFc);
+        disp(aa);
     
     
 end
@@ -80,11 +82,12 @@ for j = 1 : voxSizeY
             
             if(voxels(i,j,k) == 1)
                 
-                Y =  minY + double(j)*VOX_SIZE + VOX_SIZE/2;
-                X =  minX + double(i)*VOX_SIZE + VOX_SIZE/2;
-                Z =  minX + double(k)*VOX_SIZE + VOX_SIZE/2;
+              
+                X =  minX + double(i)*VOX_SIZE;
+                Y =  minY + double(j)*VOX_SIZE;
+                Z =  minZ + double(k)*VOX_SIZE;
                               
-                cube_plot([X,Y,Z],VOX_SIZE,VOX_SIZE,VOX_SIZE,'r');
+                cube_plot([X,Y,Z],VOX_SIZE,VOX_SIZE,VOX_SIZE,'g');
             end
 
         end
@@ -101,7 +104,7 @@ function intersects = isVoxelIntersectsPolygon(VOX_SIZE, cCords, polygon)
 
     points = zeros(8, 3);
     edges = zeros(12, 6);
-    u = VOX_SIZE;
+    u = VOX_SIZE/2;
     
     points(1,:) = cCords + [+u +u +u];
     points(2,:) = cCords + [-u +u +u];
@@ -124,55 +127,60 @@ function intersects = isVoxelIntersectsPolygon(VOX_SIZE, cCords, polygon)
     edges(10,:) = [points(5,:) points(3,:)];
     edges(11,:) = [points(2,:) points(8,:)];
     edges(12,:) = [points(7,:) points(8,:)];
+   
+   
+%      for i = 1 : 12 
+%            line([edges(i,1) edges(i,4)],[edges(i,2) edges(i,5)],[edges(i,3) edges(i,6)],'Marker','.','LineStyle','-')
+%      end
+%      
+       line([polygon(1,1) polygon(2,1)],[polygon(1,2) polygon(3,2)],[polygon(1,3) polygon(2,3)],'Marker','.','LineStyle','-')
+       line([polygon(2,1) polygon(3,1)],[polygon(2,2) polygon(3,2)],[polygon(2,3) polygon(3,3)],'Marker','.','LineStyle','-')
+       line([polygon(1,1) polygon(3,1)],[polygon(1,2) polygon(3,2)],[polygon(1,3) polygon(3,3)],'Marker','.','LineStyle','-')
+      
     
     for i = 1 : 12 
-       isIntersect = isLineIntersectsPolygon(edges(i,:), polygon, VOX_SIZE);
-      
+        
+           
+%         line([edges(i,1) edges(i,4)],[edges(i,2) edges(i,5)],[edges(i,3) edges(i,6)],'Marker','.','LineStyle','-','Color','r')
        
-       if(isIntersect == 1)
+        cline = [edges(i,1)             edges(i,2)              edges(i,3) 
+               (edges(i,4)-edges(i,1)) (edges(i,5)-edges(i,2)) (edges(i,6)- edges(i,3))];
+        
+       isIntersect = isLineIntersectsPolygon( edges(i,:), polygon, VOX_SIZE, cCords);
+      
+    
+       if(isIntersect)
+%            line([edges(i,1) edges(i,4)],[edges(i,2) edges(i,5)],[edges(i,3) edges(i,6)],'Marker','.','LineStyle','-','Color','g')
            intersects = 1;
            return
        end
       
     end
     
-    for i = 1: size(polygon)
-        if(     polygon(i,1) > cCords(1)- VOX_SIZE/2 && ...
-                polygon(i,2) > cCords(2)- VOX_SIZE/2 && ...
-                polygon(i,3) > cCords(3)- VOX_SIZE/2 && ...
-                polygon(i,1) < cCords(1)+ VOX_SIZE/2 && ...
-                polygon(i,2) < cCords(2)+ VOX_SIZE/2 && ...
-                polygon(i,3) < cCords(3)+ VOX_SIZE/2 ...
-            )
-              intersects = 1;
-               return
-        end
-    end
-    
 end
 
 
-function isIntersect = isLineIntersectsPolygon(line, polygon, VOX_SIZE)
+function isIntersect = isLineIntersectsPolygon(line, polygon, VOX_SIZE, cCords)
 % 
 %
 % Should return 0 if not intersects, and 1 if intersects
 % line must be given [x y z,  z y z]; 
 % polygon must be given  [x y z,  z y z,  z y z,  z y z ....]; 
 %
-polygonVerticesCount = size(polygon);
-isIntersect = 0;
+% polygonVerticesCount = size(polygon);
+% isIntersect = 0;
 
-   [point, pos, isInside] = isLineIntersectsTriangle( line, polygon);
-    
-%      [isInside, xx, yy, zz] = lineIntersectsTriangle(line(1:3),line(4:6), polygon(1,:),polygon(2,:),polygon(3,:));
-%      point = [xx yy zz];
-    
-     distance = norm(point-line(1:3));
+   [point, pos, isInside] = lineIntersectsTriangleMod( line, polygon);
    
-    if (isInside && distance < VOX_SIZE)
-        isIntersect = 1;
-    end
+    
+%      distance = norm(point-cCords);
    
+%     if (isInside && distance < VOX_SIZE*2)
+%         isIntersect = 1;
+%     end
+   
+ 
+    isIntersect = isInside;
     return;
 end
 

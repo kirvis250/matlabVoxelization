@@ -1,4 +1,4 @@
-function [point, pos, isInside] = isLineIntersectsTriangle(line, triangle, varargin)
+function [point, pos, isInside] = lineIntersectsTriangleMod(line, triangle, varargin)
 %INTERSECTLINETRIANGLE3D Intersection point of a 3D line and a 3D triangle
 %
 %   POINT = intersectLineTriangle3d(LINE, TRI)
@@ -53,22 +53,11 @@ if ~isempty(varargin)
     tol = varargin{1};
 end
 
-t = NaN;
-
 %% Process inputs
-
-% triangle edge vectors
-if size(triangle, 2) > 3
-    % triangle is given as a 1-by-9 row vector
-    t0  = triangle(1:3);
-    u   = triangle(4:6) - t0;
-    v   = triangle(7:9) - t0;
-else
-    % triangle is given as a 3-by-3 array
-    t0  = triangle(1, 1:3);
-    u   = triangle(2, 1:3) - t0;
-    v   = triangle(3, 1:3) - t0;
-end
+% triangle is given as a 3-by-3 array
+t0  = triangle(1, 1:3);
+u   = triangle(2, 1:3) - t0;
+v   = triangle(3, 1:3) - t0;
 
 
 %% Compute intersection
@@ -77,9 +66,9 @@ end
 n   = cross(u, v);
 
 % test for degenerate case of flat triangle
-% if vectorNorm3d(n) < tol
-%     return;
-% end
+ if vectorNorm3d(n) < tol
+     return;
+ end
 
 % line direction vector
 dir = line(4:6);
@@ -113,7 +102,7 @@ uv  = dot(u, v);
 vv  = dot(v, v);
 
 % coordinates of vector v in triangle basis
-w   = point + t0;
+w   = point - t0;
 wu  = dot(w, u);
 wv  = dot(w, v);
 
@@ -139,4 +128,29 @@ end
 % set the validity flag
 isInside = true;
 
+
+
+function n = vectorNorm3d(v)
+%VECTORNORM3D Norm of a 3D vector or of set of 3D vectors
+%
+%   N = vectorNorm3d(V);
+%   Returns the norm of vector V.
+%
+%   When V is a N-by-3 array, compute norm for each vector of the array.
+%   Vector are given as rows. Result is then a N-by-1 array.
+%
+%   NOTE: compute only euclidean norm.
+%
+%   See Also
+%   vectors3d, normalizeVector3d, vectorAngle3d, hypot3
+%
+%   ---------
+%   author : David Legland 
+%   INRA - TPV URPOI - BIA IMASTE
+%   created the 21/02/2005.
+
+%   HISTORY
+%   19/06/2009 rename as vectorNorm3d
+
+n = sqrt(sum(v.*v, 2));
 
